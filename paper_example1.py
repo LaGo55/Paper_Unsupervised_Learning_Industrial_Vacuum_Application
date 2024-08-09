@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA, NMF
+from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score
 import seaborn as sn
 import matplotlib.pyplot as plt
@@ -35,12 +35,14 @@ class PCA_example():
         self.iter = 0
         
         
-    def __PCA__(self, k, err):
+    def __PCA__(self, data, k, err):
             
         # Perform PCA
         pca = PCA(n_components=k, svd_solver="full", tol=err, whiten=True) # whiten = True -> Correlation matrix, False = Covariance matrix
-        self.pca_dataset = pca.fit_transform(self.dataset)
+        self.pca_dataset = pca.fit_transform(data)
         data_pca_reconstructed = pca.inverse_transform(self.pca_dataset)
+        
+        print(f"Dimensions of reconstructed pca_data vs size of dataset: {data_pca_reconstructed.shape} vs {data.shape}")
         
         return pca, data_pca_reconstructed   
     
@@ -57,11 +59,13 @@ class PCA_example():
         Outputs: 
         Array of number of metrics for given number of components k.    
         """
-    
+        print(metrics)
         metrics.loc[k-2, "Components"] = k
         
+        
+        
         # Perform PCA
-        pca, data_pca_reconstructed = self.__PCA__(k, err)
+        pca, data_pca_reconstructed = self.__PCA__(data, k, err)
         
         # Calculate PCA metrics
         metrics.loc[k-2,"PCA Variance"] = pca.explained_variance_ratio_.sum().round(2)
@@ -69,6 +73,7 @@ class PCA_example():
         metrics.loc[k-2,"PCA R2"] = r2_score(data, data_pca_reconstructed)
         metrics.loc[k-2,"PCA EV"] = explained_variance_score(data, data_pca_reconstructed)
         del data_pca_reconstructed
+        return metrics
         
         #print(f"Iteration {self.iter}-{k}")
 
@@ -86,7 +91,7 @@ class PCA_example():
         Array of number of components and corresponding performances of each method.    
         """
         k=2
-        metrics = pd.DataFrame()
+        metrics = pd.DataFrame(columns=["Components","PCA Variance", "PCA MSE", "PCA R2", "PCA EV"])
         
         while k <= comp:
             print("Iteration with: "+str(k)+"/"+str(comp)+ " Components")
@@ -107,7 +112,7 @@ class PCA_example():
         # Calculate metrics
         metrics = self.__dimReductionMethods__(data, comp=data.shape[1], err=0.001)
         # Save metrics as Excel file 
-        path = str(self.run)+"-"+str(self.iter)+"_dim_red_metrics.xlsx"
+        path = str(self.iter)+"_dim_red_metrics.xlsx"
         metrics.to_excel(path, index=False)
         
         # Plot metric results
@@ -121,7 +126,7 @@ class PCA_example():
             #plt.plot(range(1,comp+1,i), metrics["UMAP MSE"].values, label='UMAP')
             plt.xlabel('Number of Components')
             plt.ylabel('Reconstruction Error')
-            plt.title(f'Reconstruction Error Comparison ({metric_labels[i-1]}, Iteration {str(self.run)}-{str(self.iter)})')
+            plt.title(f'Reconstruction Error Comparison ({metric_labels[i-1]}, Iteration {str(self.iter)})')
             plt.legend()
 
         plt.subplot(2, 2, 4)
@@ -133,7 +138,7 @@ class PCA_example():
         plt.tight_layout()
         
         # Save metrics plot as png
-        path = str(self.run) +"-"+str(self.iter)+"_dim_red_metrics"
+        path =str(self.iter)+"_dim_red_metrics"
         plt.savefig(path)
     
     
@@ -152,17 +157,17 @@ class PCA_example():
         pca = PCA(n_components=k, tol=err, whiten=True, svd_solver=solver)
         pca = pca.fit(data)
         # Save PCA model as pkl file
-        path = "C:/Users/a00546973/Desktop/MasterGENIUS/Models/"+"pca_model_file_GHS2002_"+str(self.run)+"-"+str(self.iter)+".pkl"
+        path = "pca_model_file_GHS2002_"+str(self.iter)+".pkl"
         joblib.dump(pca,path)
         # Save PCA reduced data as csv file
         pcs = pca.transform(data)
-        path = "C:/Users/a00546973/Desktop/MasterGENIUS/Dimensionality_Reduction/"+"PCA_data_"+str(self.run)+"-"+str(self.iter)+".csv"
+        path = "PCA_data_"+str(self.iter)+".csv"
         label = pca.get_feature_names_out()
         pcs_data = pd.DataFrame(pcs, columns=label)
         pcs_data.to_csv(path, index=False)
         # Save PCA component description as Excel file
         pcs_df = pd.DataFrame(pca.components_,columns = data.columns, index=label)
-        path = "C:/Users/a00546973/Desktop/MasterGENIUS/Dimensionality_Reduction/"+"PCA_results_"+str(self.run)+"-"+str(self.iter)+".xlsx"
+        path = "PCA_results_"+str(self.iter)+".xlsx"
         pcs_df.to_excel(excel_writer=path)
         
         fig = plt.figure(figsize=(20,20))
@@ -188,8 +193,9 @@ class PCA_example():
             self.iter = it
             # Select parameter combinations with iteration key from parameter_comb dictionary
             params = self.parameter_comb[it]
+            print(params)
             data = self.dataset[params]
-            
+            print(data.head())
             # Execute class methods
             print(f"Iteration {it}: \nCalculating metrics...")
             self.__plot_dim_red__(data)
@@ -197,7 +203,7 @@ class PCA_example():
             self.dim_red_results(4, data)
             print(f"Iteration {it}: \nPlot generated.")
         
-        print(f"Dimensionality reduction of run {self.run} finished.")
+        print(f"Dimensionality reduction finished.")
 
 # Initialise class
 #path = "scaled_df_2.csv"
