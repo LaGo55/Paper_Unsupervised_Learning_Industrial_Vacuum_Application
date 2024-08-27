@@ -112,7 +112,7 @@ class PCA_example():
         # Calculate metrics
         metrics = self.__dimReductionMethods__(data, comp=data.shape[1], err=0.001)
         # Save metrics as Excel file 
-        path = str(self.iter)+"_dim_red_metrics.xlsx"
+        path = "dimRed/" + str(self.iter) +"_dim_red_metrics.xlsx"
         metrics.to_excel(path, index=False)
         
         # Plot metric results
@@ -138,7 +138,7 @@ class PCA_example():
         plt.tight_layout()
         
         # Save metrics plot as png
-        path =str(self.iter)+"_dim_red_metrics"
+        path = "dimRed/"+str(self.iter)+"_dim_red_metrics"
         plt.savefig(path)
     
     
@@ -157,17 +157,17 @@ class PCA_example():
         pca = PCA(n_components=k, tol=err, whiten=True, svd_solver=solver)
         pca = pca.fit(data)
         # Save PCA model as pkl file
-        path = "pca_model_file_GHS2002_"+str(self.iter)+".pkl"
+        path = "PCA/pca_model_file"+str(self.iter)+".pkl"
         joblib.dump(pca,path)
         # Save PCA reduced data as csv file
         pcs = pca.transform(data)
-        path = "PCA_data_"+str(self.iter)+".csv"
+        path = "PCA/PCA_data_"+str(self.iter)+".csv"
         label = pca.get_feature_names_out()
         pcs_data = pd.DataFrame(pcs, columns=label)
         pcs_data.to_csv(path, index=False)
         # Save PCA component description as Excel file
         pcs_df = pd.DataFrame(pca.components_,columns = data.columns, index=label)
-        path = "PCA_results_"+str(self.iter)+".xlsx"
+        path = "PCA/PCA_results_"+str(self.iter)+".xlsx"
         pcs_df.to_excel(excel_writer=path)
         
         fig = plt.figure(figsize=(20,20))
